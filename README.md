@@ -3,6 +3,8 @@ Laravel implementation of the Binance crypto exchange trading API
 
 ![Scrutinizer coverage](https://img.shields.io/scrutinizer/g/sabramooz/laravel-binance?style=for-the-badge)
 
+https://scrutinizer-ci.com/g/sabramooz/laravel-binance/
+
 #### Install
 
 ```
