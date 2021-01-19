@@ -66,6 +66,7 @@ Utilises autoloading in Laravel 5.5+. For older versions add the following lines
 If you find an issue or have a better way to do something, feel free to open an issue, or a pull request.
 If you use laravel-binance in your open source project, create a pull request to provide its URL as a sample application in the README.md file.
 
+--------------------
 
 ### :exclamation: Security
 If you discover any security-related issues, please email `pooya.alen1990@gmail.com` instead of using the issue tracker.
