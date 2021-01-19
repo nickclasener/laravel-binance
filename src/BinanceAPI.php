@@ -74,7 +74,7 @@ class BinanceAPI
      */
     public function getTickers()
     {
-        return $this->request('v1/ticker/allPrices');
+        return $this->request('v3/ticker/price');
     }
 
     /**
@@ -124,7 +124,7 @@ class BinanceAPI
         $data = [
             'symbol' => $symbol
         ];
-        return $this->request('v1/ticker/allPrices', $data);
+        return $this->request('v3/ticker/price', $data);
     }
 
     public function getCurrencies()
@@ -157,7 +157,7 @@ class BinanceAPI
      */
     public function getMarkets()
     {
-        $return = $this->request('v1/exchangeInfo');
+        $return = $this->request('v3/exchangeInfo');
         return $return['symbols'];
     }
 
