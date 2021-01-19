@@ -1,34 +1,39 @@
 {
-    "name": "adman9000/laravel-binance",
-    "description": "Implementation of Binance trading API for Laravel",
-	  "tags": ["binance", "api", "laravel"],
-	  "type": "library",
-	  "license": "MIT",
-	  "authors": [
-		{
-		  "name": "Adam Harding",
-		  "email": "myaddressistaken@googlemail.com"
-		}
-	  ],
-   "require": {
+  "name": "sabramooz/laravel-binance",
+  "description": "Implementation of Binance trading API for Laravel",
+  "keywords": [
+    "binance",
+    "laravel",
+    "api"
+  ],
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Pooya Sabramooz",
+      "email": "pooya.alen1990@gmail.com",
+      "homepage": "https://sabramooz.ir",
+      "role": "Developer"
+    }
+  ],
+  "require": {
     "php": ">=5.6.4",
     "ext-curl": "*",
-    "laravel/framework": ">=5.3"
+    "laravel/framework": ">=6"
   },
   "autoload": {
     "psr-4": {
-      "adman9000\\binance\\": "src/"
+      "sabramooz\\binance\\": "src/"
     }
   },
   "extra": {
     "laravel": {
-        "providers": [
-            "adman9000\\binance\\BinanceServiceProvider"
-        ],
-        "aliases": {
-            "Binance": "adman9000\\binance\\BinanceAPIFacade"
-        }
+      "providers": [
+        "sabramooz\\binance\\BinanceServiceProvider"
+      ],
+      "aliases": {
+        "Binance": "sabramooz\\binance\\BinanceAPIFacade"
+      }
     }
-}
-
+  }
 }
