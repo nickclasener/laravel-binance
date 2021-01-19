@@ -31,7 +31,7 @@ Utilises autoloading in Laravel 5.5+. For older versions add the following lines
 ```
 ##### Result
 
-```json
+```text
     array:2 [▼
       "mins" => 5
       "price" => "37009.43501853"
