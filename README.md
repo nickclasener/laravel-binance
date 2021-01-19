@@ -6,7 +6,7 @@ Laravel implementation of the Binance crypto exchange trading API
 #### Install via Composer
 
 ```
-composer require adman9000/laravel-binance
+composer require sabramooz/laravel-binance
 ```
 
 Utilises autoloading in Laravel 5.5+. For older versions add the following lines to your `config/app.php`
@@ -14,14 +14,14 @@ Utilises autoloading in Laravel 5.5+. For older versions add the following lines
 ```php
 'providers' => [
         ...
-        adman9000\binance\BinanceServiceProvider::class,
+        sabramooz\binance\BinanceServiceProvider::class,
         ...
     ],
 
 
  'aliases' => [
         ...
-        'Kraken' => adman9000\binance\BinanceAPIFacade::class,
+        'Binance' => sabramooz\binance\BinanceAPIFacade::class,
     ],
 ```
 

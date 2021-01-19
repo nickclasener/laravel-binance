@@ -1,5 +1,7 @@
 <?php
+
 return [
+
     /*
     |--------------------------------------------------------------------------
     | Binance authentication
@@ -10,8 +12,8 @@ return [
      */
 
     'auth' => [
-        'key'        => env('BINANCE_KEY', ''),
-        'secret'     => env('BINANCE_SECRET', '')
+        'key' => env('BINANCE_KEY', ''),
+        'secret' => env('BINANCE_SECRET', '')
     ],
 
     /*
@@ -24,8 +26,8 @@ return [
      */
 
     'urls' => [
-        'api'  => 'https://api.binance.com/api/',
-        'wapi'  => 'https://api.binance.com/wapi/'
+        'api' => 'https://api.binance.com/api/',
+        'wapi' => 'https://api.binance.com/wapi/'
     ],
 
 
@@ -40,7 +42,7 @@ return [
 
     'settings' => [
         'timing' => env('BINANCE_TIMING', 5000),
-        'ssl'    => env('BINANCE_SSL_VERIFYPEER', true)
+        'ssl' => env('BINANCE_SSL_VERIFYPEER', true)
     ],
 
 ];
