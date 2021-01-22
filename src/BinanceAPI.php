@@ -4,25 +4,33 @@ namespace sabramooz\binance;
 
 use Exception;
 
-class BinanceAPI
-{
-    protected $key;         // API key
-    protected $secret;      // API secret
-    protected $url;         // API base URL
-    protected $recvWindow;  // API base URL
-    protected $version;     // API version
-    protected $curl;        // curl handle
+class BinanceAPI {
 
-    /**
-     * Constructor for BinanceAPI
-     */
+    protected string $key;       // API key
+    protected string $secret;    // API secret
+    protected string $url;       // API base URL
+    protected int $recvWindow;   // The number of milliseconds after timestamp the request is valid for
+    protected string $version;   // API version
+    protected string $wapi_url;  // WAPI URL
+    protected $curl;             // curl handle
+
     function __construct()
+    {
+        $this->boot();
+        $this->setupCurl();
+    }
+
+    public function boot()
     {
         $this->key = config('binance.auth.key');
         $this->secret = config('binance.auth.secret');
         $this->url = config('binance.urls.api');
         $this->wapi_url = config('binance.urls.wapi');
         $this->recvWindow = config('binance.settings.timing');
+    }
+
+    public function setupCurl(): void
+    {
         $this->curl = curl_init();
 
         $curl_options = [
@@ -35,15 +43,6 @@ class BinanceAPI
         ];
 
         curl_setopt_array($this->curl, $curl_options);
-
-    }
-
-    /**
-     * Close CURL
-     */
-    function __destruct()
-    {
-        curl_close($this->curl);
     }
 
     /**
@@ -53,20 +52,11 @@ class BinanceAPI
      * @param string $key API Key
      * @param string $secret API Secret
      */
-    function setAPI($key, $secret)
+    public function setAPI(string $key, string $secret): void
     {
         $this->key = $key;
         $this->secret = $secret;
     }
-
-
-    //------ PUBLIC API CALLS --------
-    /*
-    * getTicker
-    * getCurrencies
-    * getMarkets
-    * getAvgPrice
-    */
 
     /**
      * Get ticker
@@ -74,7 +64,7 @@ class BinanceAPI
      * @return mixed
      * @throws Exception
      */
-    public function getTickers()
+    public function getTickers(): array
     {
         return $this->request('v3/ticker/price');
     }
@@ -88,82 +78,65 @@ class BinanceAPI
      * @return mixed
      * @throws Exception
      */
-    private function request($url, $params = [], $method = 'GET')
+    private function request(string $url, array $params = [], string $method = 'GET'): array
     {
-        // Set URL & Header
         curl_setopt($this->curl, CURLOPT_URL, $this->url . $url);
         curl_setopt($this->curl, CURLOPT_HTTPHEADER, array());
 
-        //Add post vars
         if ($method == 'POST') {
             curl_setopt($this->curl, CURLOPT_POST, count($params));
             curl_setopt($this->curl, CURLOPT_POSTFIELDS, $params);
         }
 
-        //Get result
         $result = curl_exec($this->curl);
-        if ($result === false)
+        if ($result === false) {
             throw new Exception('CURL error: ' . curl_error($this->curl));
+        }
 
-        // decode results
         $result = json_decode($result, true);
 
-        if (!is_array($result) || json_last_error())
+        if (!is_array($result) || json_last_error()) {
             throw new Exception('JSON decode error');
+        }
 
         return $result;
-
     }
 
     /**
      * Get ticker
      *
+     * @param string $symbol
      * @return mixed
      * @throws Exception
      */
-    public function getTicker($symbol)
+    public function getSymbolPriceByTicker(string $symbol): array
     {
         $data = [
             'symbol' => $symbol
         ];
-        return $this->request('v3/ticker/price?symbol=' . $symbol , $data);
+        return $this->request('v3/ticker/price?symbol=' . $symbol, $data);
     }
 
     /**
      * Get ticker
      *
-     * @param $symbol
+     * @param  $symbol
      * @return mixed
      * @throws Exception
      */
-    public function getAvgPrice($symbol)
+    public function getSymbolAvgPrice(string $symbol): array
     {
         $data = [
             'symbol' => $symbol
         ];
-        return $this->request('v3/avgPrice?symbol='.$symbol, $data);
+        return $this->request('v3/avgPrice?symbol=' . $symbol, $data);
     }
 
-    public function getCurrencies()
+    public function getCurrencies(): bool
     {
         //Seems to be no such functionality
         return false;
     }
-
-
-    //------ PRIVATE API CALLS ----------
-    /*
-    * getBalances
-    * getRecentTrades
-    * getOpenOrders
-    * getAllOrders
-    * trade
-    * marketSell
-    * marketBuy
-    * limitSell
-    * limitBuy
-    * depositAddress
-    */
 
     /**
      * Current exchange trading rules and symbol information
@@ -171,7 +144,7 @@ class BinanceAPI
      * @return mixed
      * @throws Exception
      */
-    public function getMarkets()
+    public function getMarkets(): array
     {
         $return = $this->request('v3/exchangeInfo');
         return $return['symbols'];
@@ -183,7 +156,7 @@ class BinanceAPI
      * @return mixed
      * @throws Exception
      */
-    public function getBalances()
+    public function getBalances(): array
     {
         $b = $this->privateRequest('v3/account');
         return $b['balances'];
@@ -198,13 +171,13 @@ class BinanceAPI
      * @return mixed
      * @throws Exception
      */
-    private function privateRequest($url, $params = [], $method = 'GET')
+    private function privateRequest($url, $params = [], $method = 'GET'): array
     {
         // build the POST data string
         $params['timestamp'] = number_format((microtime(true) * 1000), 0, '.', '');
         $params['recvWindow'] = $this->recvWindow;
 
-        $query = http_build_query($params, '', '&');
+        $query = http_build_query($params);
 
         // set API key and sign the message
         $sign = hash_hmac('sha256', $query, $this->secret);
@@ -213,33 +186,28 @@ class BinanceAPI
             'X-MBX-APIKEY: ' . $this->key
         );
 
-        // make request
         curl_setopt($this->curl, CURLOPT_HTTPHEADER, $headers);
 
-        // build the POST data string
-        $postdata = $params;
+        //$postdata = $params;
 
-        // Set URL & Header
         curl_setopt($this->curl, CURLOPT_URL, $this->url . $url . "?{$query}&signature={$sign}");
 
-        //Add post vars
         if ($method == "POST") {
             curl_setopt($this->curl, CURLOPT_POST, 1);
-            curl_setopt($this->curl, CURLOPT_POSTFIELDS, array());
+            curl_setopt($this->curl, CURLOPT_POSTFIELDS, []);
         }
 
-        //Get result
         $result = curl_exec($this->curl);
-        if ($result === false)
+        if ($result === false) {
             throw new Exception('CURL error: ' . curl_error($this->curl));
+        }
 
-        // decode results
         $result = json_decode($result, true);
-        if (!is_array($result) || json_last_error())
+        if (!is_array($result) || json_last_error()) {
             throw new Exception('JSON decode error');
+        }
 
         return $result;
-
     }
 
     /**
@@ -250,31 +218,28 @@ class BinanceAPI
      * @return mixed
      * @throws Exception
      */
-    public function getRecentTrades($symbol = 'BNBBTC', $limit = 500)
+    public function getRecentTrades(string $symbol = 'BNBBTC', int $limit = 500): array
     {
         $data = [
             'symbol' => $symbol,
             'limit' => $limit,
         ];
 
-        $b = $this->privateRequest('v3/myTrades', $data);
-        return $b;
-
+        return $this->privateRequest('v3/myTrades', $data);
     }
 
-    public function getOpenOrders()
+    public function getOpenOrders(): array
     {
-        $b = $this->privateRequest('v3/openOrders');
-        return $b;
+        return $this->privateRequest('v3/openOrders');
     }
 
-    public function getAllOrders($symbol)
+    public function getAllOrders(string $symbol)
     {
         $data = [
             'symbol' => $symbol
         ];
-        $b = $this->privateRequest('v3/allOrders', $data);
-        return $b;
+
+        return $this->privateRequest('v3/allOrders', $data);
     }
 
     /**
@@ -285,9 +250,50 @@ class BinanceAPI
      * @return mixed
      * @throws Exception
      */
-    public function marketSell($symbol, $quantity)
+    public function marketSell(string $symbol, string $quantity): array
     {
-        return $this->trade($symbol, $quantity, 'SELL', 'MARKET');
+        return $this->trade($symbol, $quantity, 'SELL');
+    }
+
+    /**
+     * Buy at market price
+     *
+     * @param string $symbol Asset pair to trade
+     * @param string $quantity Amount of trade asset
+     * @return mixed
+     * @throws Exception
+     */
+    public function marketBuy(string $symbol, string $quantity): array
+    {
+        return $this->trade($symbol, $quantity, 'BUY');
+    }
+
+    /**
+     * Sell limit
+     *
+     * @param string $symbol Asset pair to trade
+     * @param string $quantity Amount of trade asset
+     * @param float $price Limit price to sell
+     * @return mixed
+     * @throws Exception
+     */
+    public function limitSell(string $symbol, string $quantity, float $price): array
+    {
+        return $this->trade($symbol, $quantity, 'SELL', 'LIMIT', $price);
+    }
+
+    /**
+     * Buy limit
+     *
+     * @param string $symbol Asset pair to trade
+     * @param string $quantity Amount of trade asset
+     * @param float $price Limit price to buy
+     * @return mixed
+     * @throws Exception
+     */
+    public function limitBuy(string $symbol, string $quantity, float $price): array
+    {
+        return $this->trade($symbol, $quantity, 'BUY', 'LIMIT', $price);
     }
 
     /**
@@ -301,7 +307,7 @@ class BinanceAPI
      * @return mixed
      * @throws Exception
      */
-    public function trade($symbol, $quantity, $side, $type = 'MARKET', $price = false)
+    public function trade(string $symbol, string $quantity, string $side, string $type = 'MARKET', bool $price = false): array
     {
         $data = [
             'symbol' => $symbol,
@@ -309,66 +315,23 @@ class BinanceAPI
             'type' => $type,
             'quantity' => $quantity
         ];
+
         if ($price !== false) {
             $data['price'] = $price;
         }
 
-        $b = $this->privateRequest('v3/order', $data, 'POST');
-
-        return $b;
-    }
-
-    /**
-     * Buy at market price
-     *
-     * @param string $symbol Asset pair to trade
-     * @param string $quantity Amount of trade asset
-     * @return mixed
-     * @throws Exception
-     */
-    public function marketBuy($symbol, $quantity)
-    {
-        return $this->trade($symbol, $quantity, 'BUY', 'MARKET');
-    }
-
-    /**
-     * Sell limit
-     *
-     * @param string $symbol Asset pair to trade
-     * @param string $quantity Amount of trade asset
-     * @param float $price Limit price to sell
-     * @return mixed
-     * @throws Exception
-     */
-    public function limitSell($symbol, $quantity, $price)
-    {
-        return $this->trade($symbol, $quantity, 'SELL', 'LIMIT', $price);
-    }
-
-    //------ REQUESTS FUNCTIONS ------
-
-    /**
-     * Buy limit
-     *
-     * @param string $symbol Asset pair to trade
-     * @param string $quantity Amount of trade asset
-     * @param float $price Limit price to buy
-     * @return mixed
-     * @throws Exception
-     */
-    public function limitBuy($symbol, $quantity, $price)
-    {
-        return $this->trade($symbol, $quantity, 'BUY', 'LIMIT', $price);
+        return $this->privateRequest('v3/order', $data, 'POST');
     }
 
     /**
      * Deposit Address
+     *
      * @param string $symbol Asset symbol
      * @return mixed
      *
      * @throws Exception
      */
-    public function depositAddress($symbol)
+    public function getDepositAddress(string $symbol): array
     {
         return $this->wapiRequest("v3/depositAddress.html", ['asset' => $symbol]);
     }
@@ -382,48 +345,45 @@ class BinanceAPI
      * @return mixed
      * @throws Exception
      */
-    private function wapiRequest($url, $params = [], $method = 'GET')
+    private function wapiRequest(string $url, array $params = [], string $method = 'GET'): array
     {
-        // build the POST data string
         $params['timestamp'] = number_format((microtime(true) * 1000), 0, '.', '');
         $params['recvWindow'] = $this->recvWindow;
 
-        $query = http_build_query($params, '', '&');
+        $query = http_build_query($params);
 
-        // set API key and sign the message
         $sign = hash_hmac('sha256', $query, $this->secret);
 
         $headers = array(
             'X-MBX-APIKEY: ' . $this->key
         );
 
-        // make request
         curl_setopt($this->curl, CURLOPT_HTTPHEADER, $headers);
 
-        // build the POST data string
         $postdata = $params;
 
-        // Set URL & Header
         curl_setopt($this->curl, CURLOPT_URL, $this->wapi_url . $url . "?{$query}&signature={$sign}");
 
-        //Add post vars
         if ($method == "POST") {
             curl_setopt($this->curl, CURLOPT_POST, 1);
-            curl_setopt($this->curl, CURLOPT_POSTFIELDS, array());
+            curl_setopt($this->curl, CURLOPT_POSTFIELDS, array($postdata));
         }
 
-        //Get result
         $result = curl_exec($this->curl);
-        if ($result === false)
+        if ($result === false) {
             throw new Exception('CURL error: ' . curl_error($this->curl));
+        }
 
-        // decode results
         $result = json_decode($result, true);
-        if (!is_array($result) || json_last_error())
+        if (!is_array($result) || json_last_error()) {
             throw new Exception('JSON decode error');
+        }
 
         return $result;
-
     }
 
+    public function __destruct()
+    {
+        curl_close($this->curl);
+    }
 }
