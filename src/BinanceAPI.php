@@ -178,7 +178,7 @@ class BinanceAPI {
      * @return mixed
      * @throws Exception
      */
-    private function privateSRequest($url, $params = [], $method = 'GET'): array
+    public function sRequest($url, $params = [], $method = 'GET'): array
     {
         // build the POST data string
         $params['timestamp'] = number_format((microtime(true) * 1000), 0, '.', '');
