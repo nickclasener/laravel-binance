@@ -9,6 +9,7 @@ class BinanceAPI {
     protected string $key;       // API key
     protected string $secret;    // API secret
     protected string $url;       // API base URL
+    protected string $surl;       // SAPI base URL
     protected int $recvWindow;   // The number of milliseconds after timestamp the request is valid for
     protected string $version;   // API version
     protected string $wapi_url;  // WAPI URL
@@ -25,6 +26,7 @@ class BinanceAPI {
         $this->key = config('binance.auth.key');
         $this->secret = config('binance.auth.secret');
         $this->url = config('binance.urls.api');
+        $this->surl = config('binance.urls.sapi');
         $this->wapi_url = config('binance.urls.wapi');
         $this->recvWindow = config('binance.settings.timing');
     }
@@ -117,6 +119,11 @@ class BinanceAPI {
         return $this->request('v3/ticker/price?symbol=' . $symbol, $data);
     }
 
+    public function this()
+    {
+        return $this;
+    }
+
     /**
      * Get ticker
      *
@@ -160,6 +167,54 @@ class BinanceAPI {
     {
         $b = $this->privateRequest('v3/account');
         return $b['balances'];
+    }
+
+    /**
+     * Make private requests (Security Type: TRADE, USER_DATA, USER_STREAM, MARKET_DATA)
+     *
+     * @param string $url URL Endpoint
+     * @param array $params Required and optional parameters
+     * @param string $method GET, POST, PUT, DELETE
+     * @return mixed
+     * @throws Exception
+     */
+    private function privateSRequest($url, $params = [], $method = 'GET'): array
+    {
+        // build the POST data string
+        $params['timestamp'] = number_format((microtime(true) * 1000), 0, '.', '');
+        $params['recvWindow'] = $this->recvWindow;
+
+        $query = http_build_query($params);
+
+        // set API key and sign the message
+        $sign = hash_hmac('sha256', $query, $this->secret);
+
+        $headers = array(
+            'X-MBX-APIKEY: ' . $this->key
+        );
+
+        curl_setopt($this->curl, CURLOPT_HTTPHEADER, $headers);
+
+        //$postdata = $params;
+
+        curl_setopt($this->curl, CURLOPT_URL, $this->surl . $url . "?{$query}&signature={$sign}");
+
+        if ($method == "POST") {
+            curl_setopt($this->curl, CURLOPT_POST, 1);
+            curl_setopt($this->curl, CURLOPT_POSTFIELDS, []);
+        }
+
+        $result = curl_exec($this->curl);
+        if ($result === false) {
+            throw new Exception('CURL error: ' . curl_error($this->curl));
+        }
+
+        $result = json_decode($result, true);
+        if (!is_array($result) || json_last_error()) {
+            throw new Exception('JSON decode error');
+        }
+
+        return $result;
     }
 
     /**

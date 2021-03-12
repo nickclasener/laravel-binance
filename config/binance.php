@@ -27,7 +27,8 @@ return [
 
     'urls' => [
         'api' => 'https://api.binance.com/api/',
-        'wapi' => 'https://api.binance.com/wapi/'
+        'wapi' => 'https://api.binance.com/wapi/',
+        'sapi' => 'https://api.binance.com/sapi/',
     ],
 
 
